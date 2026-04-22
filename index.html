@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Polttari-ideat</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #171a21;
+      --panel-2: #1f232c;
+      --border: #2a2f3a;
+      --text: #e8eaed;
+      --muted: #9aa3b2;
+      --accent: #d4a24c;
+      --accent-2: #b8863a;
+      --danger: #e05656;
+      --ok: #3ec27f;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+    }
+
+    body {
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(212,162,76,0.10), transparent 60%),
+        radial-gradient(900px 500px at 110% 10%, rgba(212,162,76,0.06), transparent 60%),
+        var(--bg);
+    }
+
+    .wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
+
+    header.top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: #1a1a1a;
+      letter-spacing: 0.5px;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0.3px;
+    }
+    .brand p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    button, .btn {
+      background: var(--accent);
+      color: #1a1a1a;
+      border: 0;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.05s ease, background 0.15s ease;
+      font-size: 14px;
+    }
+    button:hover, .btn:hover { background: #e0b05a; }
+    button:active { transform: translateY(1px); }
+    button.ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    button.ghost:hover { background: var(--panel-2); }
+    button.danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid rgba(224,86,86,0.35);
+    }
+    button.danger:hover { background: rgba(224,86,86,0.08); }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    /* Login */
+    #login .card {
+      max-width: 420px;
+      margin: 80px auto 0;
+    }
+    #login h2 {
+      margin: 0 0 6px;
+      font-size: 20px;
+    }
+    #login p.help {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"], input[type="password"], textarea, select {
+      width: 100%;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 12px;
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(212,162,76,0.15);
+    }
+    textarea { min-height: 90px; resize: vertical; }
+
+    .row { display: grid; gap: 12px; }
+    .row.two { grid-template-columns: 1fr 1fr; }
+    @media (max-width: 560px) { .row.two { grid-template-columns: 1fr; } }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+      margin-top: 14px;
+    }
+
+    .error { color: var(--danger); font-size: 13px; margin-top: 10px; min-height: 18px; }
+    .ok { color: var(--ok); font-size: 13px; margin-top: 10px; min-height: 18px; }
+
+    /* App */
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 18px 0;
+      flex-wrap: wrap;
+    }
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .chip {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .chip.active {
+      background: var(--accent);
+      color: #1a1a1a;
+      border-color: var(--accent);
+    }
+
+    .idea-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .idea {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 16px 14px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 14px;
+      align-items: start;
+    }
+    .idea .votebox {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      min-width: 48px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 8px;
+    }
+    .idea .votebox button {
+      background: transparent;
+      color: var(--accent);
+      padding: 2px 6px;
+      font-size: 16px;
+      line-height: 1;
+      border-radius: 6px;
+    }
+    .idea .votebox button:hover { background: rgba(212,162,76,0.1); }
+    .idea .votebox .count { font-weight: 700; font-size: 15px; }
+
+    .idea .content {
+      word-break: break-word;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+    .idea .meta {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 6px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .tag {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+    }
+    .idea .delete {
+      background: transparent;
+      border: 0;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      font-size: 12px;
+      align-self: start;
+    }
+    .idea .delete:hover { color: var(--danger); }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 40px 10px;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+    }
+
+    .config-warning {
+      background: rgba(224,86,86,0.08);
+      border: 1px solid rgba(224,86,86,0.35);
+      color: #ffb4b4;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    footer {
+      margin-top: 32px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- ============ LOGIN ============ -->
+    <section id="login" class="screen active">
+      <header class="top">
+        <div class="brand">
+          <div class="logo">P</div>
+          <div>
+            <h1>Polttari-ideat</h1>
+            <p>Salainen ideakokoelma</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="card">
+        <h2>Syötä salasana</h2>
+        <p class="help">Jos et tiedä salasanaa, kysy tapahtuman järjestäjältä.</p>
+
+        <label for="pw">Salasana</label>
+        <input id="pw" type="password" autocomplete="off" placeholder="••••••••" />
+
+        <div class="actions">
+          <button id="loginBtn">Kirjaudu</button>
+        </div>
+        <div id="loginError" class="error"></div>
+      </div>
+
+      <footer>Sivu on vain kutsutuille. Älä jaa linkkiä tai salasanaa ulkopuolisille.</footer>
+    </section>
+
+    <!-- ============ APP ============ -->
+    <section id="app" class="screen">
+      <header class="top">
+        <div class="brand">
+          <div class="logo">P</div>
+          <div>
+            <h1>Polttari-ideat</h1>
+            <p id="headerSub">Lisää omasi ja äänestä suosikkejasi</p>
+          </div>
+        </div>
+        <button id="logoutBtn" class="ghost">Kirjaudu ulos</button>
+      </header>
+
+      <div id="configWarning" class="config-warning" hidden>
+        Supabase-asetuksia ei ole määritetty. Avaa tiedosto <code>index.html</code> ja täytä <code>SUPABASE_URL</code> ja <code>SUPABASE_ANON_KEY</code>. Katso ohjeet README-tiedostosta.
+      </div>
+
+      <div class="card">
+        <div class="row two">
+          <div>
+            <label for="ideaText">Uusi idea</label>
+            <textarea id="ideaText" placeholder="Esim. Sauna ja grillimakkaroita, paintball, kalaretki, whiskymaistelu..."></textarea>
+          </div>
+          <div class="row">
+            <div>
+              <label for="author">Nimi (vapaaehtoinen)</label>
+              <input id="author" type="text" placeholder="Kuka ehdotti?" />
+            </div>
+            <div>
+              <label for="category">Kategoria</label>
+              <select id="category">
+                <option value="Aktiviteetti">Aktiviteetti</option>
+                <option value="Ruoka & juoma">Ruoka & juoma</option>
+                <option value="Matkailu">Matkailu</option>
+                <option value="Pelit & haasteet">Pelit & haasteet</option>
+                <option value="Muu">Muu</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="addBtn">Lisää idea</button>
+        </div>
+        <div id="addError" class="error"></div>
+      </div>
+
+      <div class="toolbar">
+        <div class="filters" id="filters">
+          <button class="chip active" data-filter="all">Kaikki</button>
+          <button class="chip" data-filter="Aktiviteetti">Aktiviteetti</button>
+          <button class="chip" data-filter="Ruoka & juoma">Ruoka &amp; juoma</button>
+          <button class="chip" data-filter="Matkailu">Matkailu</button>
+          <button class="chip" data-filter="Pelit & haasteet">Pelit &amp; haasteet</button>
+          <button class="chip" data-filter="Muu">Muu</button>
+        </div>
+        <div class="filters">
+          <button class="chip active" data-sort="votes">Suosituimmat</button>
+          <button class="chip" data-sort="newest">Uusimmat</button>
+        </div>
+      </div>
+
+      <div id="ideaList" class="idea-grid"></div>
+
+      <footer>Tietoja säilytetään Supabasen ilmaisessa tietokannassa. Älä jaa arkaluonteisia tietoja.</footer>
+    </section>
+
+  </div>
+
+  <script type="module">
+    // =========================================================
+    // ASETUKSET — muokkaa näitä kolmea
+    // =========================================================
+    const SITE_PASSWORD = "Märäthanskat";           // Salasana jolla sisään
+    const SUPABASE_URL  = "https://exfjhdnpvwtfddzipkkc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4ZmpoZG5wdnd0ZmRkemlwa2tjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NjQ0MDIsImV4cCI6MjA5MjQ0MDQwMn0.wgdJjcMzwwRM6nz7v5mEAmA4DbExycfbUuJ1tdJK_fQ";
+    // =========================================================
+
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
+    const $ = (sel) => document.querySelector(sel);
+    const loginScreen  = $("#login");
+    const appScreen    = $("#app");
+    const loginBtn     = $("#loginBtn");
+    const logoutBtn    = $("#logoutBtn");
+    const pwInput      = $("#pw");
+    const loginError   = $("#loginError");
+    const ideaText     = $("#ideaText");
+    const authorInput  = $("#author");
+    const categoryInput= $("#category");
+    const addBtn       = $("#addBtn");
+    const addError     = $("#addError");
+    const ideaList     = $("#ideaList");
+    const configWarn   = $("#configWarning");
+    const filtersEl    = $("#filters");
+
+    let supabase = null;
+    let ideas = [];
+    let activeFilter = "all";
+    let activeSort   = "votes";
+    let votedIds = new Set(JSON.parse(localStorage.getItem("votedIds") || "[]"));
+
+    // ---- Kirjautuminen (pelkkä sivun pääsy, ei käyttäjätunnuksia) ----
+    function showApp() {
+      loginScreen.classList.remove("active");
+      appScreen.classList.add("active");
+    }
+    function showLogin() {
+      appScreen.classList.remove("active");
+      loginScreen.classList.add("active");
+      pwInput.value = "";
+      pwInput.focus();
+    }
+
+    if (sessionStorageAvailable() && sessionStorage.getItem("authed") === "1") {
+      showApp();
+      initSupabase();
+    }
+
+    loginBtn.addEventListener("click", () => {
+      if (pwInput.value === SITE_PASSWORD) {
+        loginError.textContent = "";
+        if (sessionStorageAvailable()) sessionStorage.setItem("authed", "1");
+        showApp();
+        initSupabase();
+      } else {
+        loginError.textContent = "Väärä salasana.";
+      }
+    });
+    pwInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") loginBtn.click();
+    });
+    logoutBtn.addEventListener("click", () => {
+      if (sessionStorageAvailable()) sessionStorage.removeItem("authed");
+      showLogin();
+    });
+
+    function sessionStorageAvailable() {
+      try { sessionStorage.setItem("__t","1"); sessionStorage.removeItem("__t"); return true; }
+      catch { return false; }
+    }
+
+    // ---- Supabase ----
+    function initSupabase() {
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        configWarn.hidden = false;
+        return;
+      }
+      supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      loadIdeas();
+      subscribeRealtime();
+    }
+
+    async function loadIdeas() {
+      if (!supabase) return;
+      const { data, error } = await supabase
+        .from("ideas")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) {
+        addError.textContent = "Tietojen haku epäonnistui: " + error.message;
+        return;
+      }
+      ideas = data || [];
+      render();
+    }
+
+    function subscribeRealtime() {
+      if (!supabase) return;
+      supabase
+        .channel("ideas-realtime")
+        .on("postgres_changes", { event: "*", schema: "public", table: "ideas" }, () => {
+          loadIdeas();
+        })
+        .subscribe();
+    }
+
+    // ---- Lisäys ----
+    addBtn.addEventListener("click", async () => {
+      const content = ideaText.value.trim();
+      if (!content) {
+        addError.textContent = "Kirjoita idea ennen lisäämistä.";
+        return;
+      }
+      if (!supabase) {
+        addError.textContent = "Tietokantaa ei ole määritetty.";
+        return;
+      }
+      addBtn.disabled = true;
+      addError.textContent = "";
+      const payload = {
+        content,
+        author: authorInput.value.trim() || null,
+        category: categoryInput.value || "Muu",
+        votes: 0,
+      };
+      const { error } = await supabase.from("ideas").insert(payload);
+      addBtn.disabled = false;
+      if (error) {
+        addError.textContent = "Lisäys epäonnistui: " + error.message;
+        return;
+      }
+      ideaText.value = "";
+      authorInput.value = "";
+      // realtime-subscription lataa listan uudelleen
+    });
+
+    // ---- Äänestys ja poisto ----
+    async function upvote(id) {
+      if (!supabase) return;
+      if (votedIds.has(id)) return; // yksi ääni per selain
+      const idea = ideas.find(i => i.id === id);
+      if (!idea) return;
+      const newVotes = (idea.votes || 0) + 1;
+      const { error } = await supabase
+        .from("ideas")
+        .update({ votes: newVotes })
+        .eq("id", id);
+      if (!error) {
+        votedIds.add(id);
+        localStorage.setItem("votedIds", JSON.stringify([...votedIds]));
+      }
+    }
+    async function removeIdea(id) {
+      if (!supabase) return;
+      if (!confirm("Haluatko varmasti poistaa tämän idean?")) return;
+      await supabase.from("ideas").delete().eq("id", id);
+    }
+
+    // ---- Renderöinti ----
+    filtersEl.addEventListener("click", (e) => {
+      const t = e.target;
+      if (!t.classList.contains("chip")) return;
+      if (t.dataset.filter) {
+        activeFilter = t.dataset.filter;
+        filtersEl.querySelectorAll("[data-filter]").forEach(c => c.classList.toggle("active", c === t));
+      }
+      render();
+    });
+    document.querySelectorAll("[data-sort]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        activeSort = btn.dataset.sort;
+        document.querySelectorAll("[data-sort]").forEach(c => c.classList.toggle("active", c === btn));
+        render();
+      });
+    });
+
+    function render() {
+      let list = [...ideas];
+      if (activeFilter !== "all") list = list.filter(i => (i.category || "Muu") === activeFilter);
+      if (activeSort === "votes") list.sort((a,b) => (b.votes||0) - (a.votes||0) || new Date(b.created_at) - new Date(a.created_at));
+      else list.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
+      ideaList.innerHTML = "";
+      if (!list.length) {
+        ideaList.innerHTML = `<div class="empty">Ei vielä ideoita. Ole ensimmäinen!</div>`;
+        return;
+      }
+
+      for (const i of list) {
+        const el = document.createElement("div");
+        el.className = "idea";
+        const hasVoted = votedIds.has(i.id);
+        const safeContent = escapeHtml(i.content);
+        const safeAuthor  = i.author ? escapeHtml(i.author) : "Nimetön";
+        const cat = escapeHtml(i.category || "Muu");
+        const date = new Date(i.created_at).toLocaleString("fi-FI", { dateStyle: "short", timeStyle: "short" });
+        el.innerHTML = `
+          <div class="votebox">
+            <button class="upvoteBtn" title="${hasVoted ? "Olet jo äänestänyt" : "Äänestä"}" ${hasVoted ? "disabled" : ""}>▲</button>
+            <div class="count">${i.votes || 0}</div>
+          </div>
+          <div>
+            <div class="content">${safeContent}</div>
+            <div class="meta">
+              <span class="tag">${cat}</span>
+              <span>${safeAuthor}</span>
+              <span>·</span>
+              <span>${date}</span>
+            </div>
+          </div>
+          <button class="delete" title="Poista">Poista</button>
+        `;
+        el.querySelector(".upvoteBtn").addEventListener("click", () => upvote(i.id));
+        el.querySelector(".delete").addEventListener("click", () => removeIdea(i.id));
+        ideaList.appendChild(el);
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+  </script>
+</body>
+</html>
