@@ -212,31 +212,109 @@
       border-radius: 12px;
       padding: 16px 16px 14px;
       display: grid;
-      grid-template-columns: auto 1fr auto;
+      grid-template-columns: 1fr auto;
       gap: 14px;
       align-items: start;
     }
-    .idea .votebox {
+    .rating {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 2px;
-      min-width: 48px;
+      gap: 12px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .mugs { display: flex; gap: 4px; }
+    .mug {
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      filter: grayscale(0.7) opacity(0.45);
+      transition: filter 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+    .mug:hover:not(:disabled) { background: rgba(212,162,76,0.08); }
+    .mug.preview, .mug.filled {
+      filter: none;
+      background: rgba(212,162,76,0.12);
+      border-color: rgba(212,162,76,0.5);
+    }
+    .mug:disabled { cursor: default; }
+    .rating-info {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .rating-info .you {
+      color: var(--accent);
+      margin-left: 8px;
+    }
+    .comment-toggle {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .comment-toggle:hover { background: var(--panel-2); color: var(--text); }
+    .comments {
+      margin-top: 12px;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+    .comment {
       background: var(--panel-2);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 6px 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: start;
     }
-    .idea .votebox button {
+    .comment .c-content {
+      word-break: break-word;
+      white-space: pre-wrap;
+      line-height: 1.45;
+    }
+    .comment .c-meta {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 4px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .comment .c-delete {
       background: transparent;
-      color: var(--accent);
+      border: 0;
+      color: var(--muted);
+      cursor: pointer;
       padding: 2px 6px;
-      font-size: 16px;
-      line-height: 1;
-      border-radius: 6px;
+      font-size: 11px;
     }
-    .idea .votebox button:hover { background: rgba(212,162,76,0.1); }
-    .idea .votebox .count { font-weight: 700; font-size: 15px; }
+    .comment .c-delete:hover { color: var(--danger); }
+    .comment-form {
+      display: grid;
+      grid-template-columns: 1fr 140px auto;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    @media (max-width: 560px) {
+      .comment-form { grid-template-columns: 1fr; }
+    }
+    .comment-form input, .comment-form textarea {
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+    .comment-form button { padding: 8px 14px; font-size: 13px; }
+    .comment-error { color: var(--danger); font-size: 12px; margin-top: 6px; min-height: 14px; }
+    .no-comments { color: var(--muted); font-size: 13px; font-style: italic; }
 
     .idea .content {
       word-break: break-word;
@@ -425,9 +503,25 @@
 
     let supabase = null;
     let ideas = [];
+    let commentsByIdea = {}; // { ideaId: [comments] }
+    let openComments = new Set(); // ideat joiden kommentit on auki
     let activeFilter = "all";
     let activeSort   = "votes";
-    let votedIds = new Set(JSON.parse(localStorage.getItem("votedIds") || "[]"));
+
+    // localStorage: ratedIdeas = { "id": 2, ... } (1-3 tuoppia per idea)
+    let ratedIdeas = {};
+    try {
+      ratedIdeas = JSON.parse(localStorage.getItem("ratedIdeas") || "{}");
+      // Siirto vanhasta votedIds-muodosta
+      const legacy = localStorage.getItem("votedIds");
+      if (legacy) {
+        for (const id of JSON.parse(legacy)) {
+          if (!(id in ratedIdeas)) ratedIdeas[id] = 1;
+        }
+        localStorage.setItem("ratedIdeas", JSON.stringify(ratedIdeas));
+        localStorage.removeItem("votedIds");
+      }
+    } catch {}
 
     // ---- Kirjautuminen (pelkkä sivun pääsy, ei käyttäjätunnuksia) ----
     function showApp() {
@@ -491,7 +585,26 @@
         return;
       }
       ideas = data || [];
+      await loadComments();
       render();
+    }
+
+    async function loadComments() {
+      if (!supabase) return;
+      const { data, error } = await supabase
+        .from("comments")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (error) {
+        // Kommenttitaulua ei ehkä ole viel\u00e4 luotu — ei kaadeta koko sivua
+        commentsByIdea = {};
+        return;
+      }
+      commentsByIdea = {};
+      for (const c of data || []) {
+        if (!commentsByIdea[c.idea_id]) commentsByIdea[c.idea_id] = [];
+        commentsByIdea[c.idea_id].push(c);
+      }
     }
 
     function subscribeRealtime() {
@@ -499,6 +612,9 @@
       supabase
         .channel("ideas-realtime")
         .on("postgres_changes", { event: "*", schema: "public", table: "ideas" }, () => {
+          loadIdeas();
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "comments" }, () => {
           loadIdeas();
         })
         .subscribe();
@@ -534,26 +650,44 @@
       // realtime-subscription lataa listan uudelleen
     });
 
-    // ---- Äänestys ja poisto ----
-    async function upvote(id) {
+    // ---- Äänestys, kommentit ja poisto ----
+    async function rate(id, value) {
       if (!supabase) return;
-      if (votedIds.has(id)) return; // yksi ääni per selain
+      if (id in ratedIdeas) return; // yksi ääni per idea per selain
+      if (![1,2,3].includes(value)) return;
       const idea = ideas.find(i => i.id === id);
       if (!idea) return;
-      const newVotes = (idea.votes || 0) + 1;
+      const newSum   = (idea.votes || 0) + value;
+      const newCount = (idea.rating_count || 0) + 1;
       const { error } = await supabase
         .from("ideas")
-        .update({ votes: newVotes })
+        .update({ votes: newSum, rating_count: newCount })
         .eq("id", id);
       if (!error) {
-        votedIds.add(id);
-        localStorage.setItem("votedIds", JSON.stringify([...votedIds]));
+        ratedIdeas[id] = value;
+        localStorage.setItem("ratedIdeas", JSON.stringify(ratedIdeas));
       }
     }
     async function removeIdea(id) {
       if (!supabase) return;
-      if (!confirm("Haluatko varmasti poistaa tämän idean?")) return;
+      if (!confirm("Haluatko varmasti poistaa tämän idean? Myös sen kommentit poistuvat.")) return;
       await supabase.from("ideas").delete().eq("id", id);
+    }
+    async function addComment(ideaId, content, author) {
+      if (!supabase) return { ok: false, message: "Tietokantaa ei ole määritetty." };
+      if (!content.trim()) return { ok: false, message: "Kirjoita kommentti ennen lisäämistä." };
+      const { error } = await supabase.from("comments").insert({
+        idea_id: ideaId,
+        content: content.trim(),
+        author: (author || "").trim() || null,
+      });
+      if (error) return { ok: false, message: "Kommentointi epäonnistui: " + error.message };
+      return { ok: true };
+    }
+    async function removeComment(commentId) {
+      if (!supabase) return;
+      if (!confirm("Poistetaanko kommentti?")) return;
+      await supabase.from("comments").delete().eq("id", commentId);
     }
 
     // ---- Renderöinti ----
@@ -589,16 +723,66 @@
       for (const i of list) {
         const el = document.createElement("div");
         el.className = "idea";
-        const hasVoted = votedIds.has(i.id);
+        const myRating  = ratedIdeas[i.id] || 0;
+        const hasRated  = myRating > 0;
         const safeContent = escapeHtml(i.content);
         const safeAuthor  = i.author ? escapeHtml(i.author) : "Nimetön";
         const cat = escapeHtml(i.category || "Muu");
         const date = new Date(i.created_at).toLocaleString("fi-FI", { dateStyle: "short", timeStyle: "short" });
+        const sum = i.votes || 0;
+        const count = i.rating_count || 0;
+        const avg = count > 0 ? (sum / count).toFixed(1) : null;
+        const infoText = avg
+          ? `Keskiarvo ${avg} · ${count} ${count === 1 ? "ääni" : "ääntä"}`
+          : "Ei vielä ääniä";
+        const youText = hasRated ? `<span class="you">Sinä: ${myRating}</span>` : "";
+        const mugsHtml = [1,2,3].map(v => {
+          const filled = hasRated && v <= myRating ? "filled" : "";
+          const dis = hasRated ? "disabled" : "";
+          const title = hasRated
+            ? `Olet antanut ${myRating} ${myRating === 1 ? "tuopin" : "tuoppia"}`
+            : `${v} ${v === 1 ? "tuoppi" : "tuoppia"}`;
+          return `<button class="mug ${filled}" data-value="${v}" ${dis} title="${title}">🍺</button>`;
+        }).join("");
+
+        const commentList = commentsByIdea[i.id] || [];
+        const isOpen = openComments.has(i.id);
+        const commentCount = commentList.length;
+        const toggleLabel = isOpen
+          ? `Piilota kommentit (${commentCount})`
+          : `Kommentit (${commentCount})`;
+
+        let commentsHtml = "";
+        if (isOpen) {
+          const commentsItems = commentList.length
+            ? commentList.map(c => {
+                const cAuthor = c.author ? escapeHtml(c.author) : "Nimetön";
+                const cDate = new Date(c.created_at).toLocaleString("fi-FI", { dateStyle: "short", timeStyle: "short" });
+                return `
+                  <div class="comment">
+                    <div>
+                      <div class="c-content">${escapeHtml(c.content)}</div>
+                      <div class="c-meta"><span>${cAuthor}</span><span>·</span><span>${cDate}</span></div>
+                    </div>
+                    <button class="c-delete" data-cid="${c.id}" title="Poista kommentti">Poista</button>
+                  </div>
+                `;
+              }).join("")
+            : `<div class="no-comments">Ei vielä kommentteja. Ole ensimmäinen!</div>`;
+          commentsHtml = `
+            <div class="comments">
+              ${commentsItems}
+              <form class="comment-form">
+                <textarea class="c-text" rows="1" placeholder="Kirjoita kommentti..."></textarea>
+                <input class="c-author" type="text" placeholder="Nimi (vapaaeht.)" />
+                <button type="submit">Lähetä</button>
+              </form>
+              <div class="comment-error"></div>
+            </div>
+          `;
+        }
+
         el.innerHTML = `
-          <div class="votebox">
-            <button class="upvoteBtn" title="${hasVoted ? "Olet jo äänestänyt" : "Äänestä"}" ${hasVoted ? "disabled" : ""}>▲</button>
-            <div class="count">${i.votes || 0}</div>
-          </div>
           <div>
             <div class="content">${safeContent}</div>
             <div class="meta">
@@ -607,10 +791,66 @@
               <span>·</span>
               <span>${date}</span>
             </div>
+            <div class="rating">
+              <div class="mugs">${mugsHtml}</div>
+              <div class="rating-info"><span>${infoText}</span>${youText}</div>
+              <button class="comment-toggle" type="button">${toggleLabel}</button>
+            </div>
+            ${commentsHtml}
           </div>
           <button class="delete" title="Poista">Poista</button>
         `;
-        el.querySelector(".upvoteBtn").addEventListener("click", () => upvote(i.id));
+
+        // Tuopit
+        const mugsEl = el.querySelector(".mugs");
+        if (!hasRated) {
+          mugsEl.addEventListener("mouseover", (e) => {
+            const t = e.target;
+            if (!t.classList.contains("mug") || t.disabled) return;
+            const v = parseInt(t.dataset.value);
+            mugsEl.querySelectorAll(".mug").forEach((m, idx) => {
+              m.classList.toggle("preview", idx + 1 <= v);
+            });
+          });
+          mugsEl.addEventListener("mouseleave", () => {
+            mugsEl.querySelectorAll(".mug").forEach(m => m.classList.remove("preview"));
+          });
+          mugsEl.addEventListener("click", (e) => {
+            const t = e.target.closest(".mug");
+            if (!t) return;
+            rate(i.id, parseInt(t.dataset.value));
+          });
+        }
+
+        // Kommenttien avaus/piilotus
+        el.querySelector(".comment-toggle").addEventListener("click", () => {
+          if (openComments.has(i.id)) openComments.delete(i.id);
+          else openComments.add(i.id);
+          render();
+        });
+
+        // Kommenttien lisäys ja poisto
+        if (isOpen) {
+          const form = el.querySelector(".comment-form");
+          const cErr = el.querySelector(".comment-error");
+          form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const txt = form.querySelector(".c-text").value;
+            const who = form.querySelector(".c-author").value;
+            const btn = form.querySelector("button");
+            btn.disabled = true;
+            cErr.textContent = "";
+            const res = await addComment(i.id, txt, who);
+            btn.disabled = false;
+            if (!res.ok) { cErr.textContent = res.message; return; }
+            form.querySelector(".c-text").value = "";
+            form.querySelector(".c-author").value = "";
+          });
+          el.querySelectorAll(".c-delete").forEach(btn => {
+            btn.addEventListener("click", () => removeComment(btn.dataset.cid));
+          });
+        }
+
         el.querySelector(".delete").addEventListener("click", () => removeIdea(i.id));
         ideaList.appendChild(el);
       }
