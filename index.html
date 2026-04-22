@@ -157,7 +157,10 @@
 
     .row { display: grid; gap: 12px; }
     .row.two { grid-template-columns: 1fr 1fr; }
-    @media (max-width: 560px) { .row.two { grid-template-columns: 1fr; } }
+    .row.three { grid-template-columns: 1fr 1fr 1fr; }
+    @media (max-width: 560px) {
+      .row.two, .row.three { grid-template-columns: 1fr; }
+    }
 
     .actions {
       display: flex;
@@ -316,10 +319,27 @@
     .comment-error { color: var(--danger); font-size: 12px; margin-top: 6px; min-height: 14px; }
     .no-comments { color: var(--muted); font-size: 13px; font-style: italic; }
 
+    .idea .idea-title {
+      margin: 0 0 6px;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      color: var(--text);
+    }
     .idea .content {
       word-break: break-word;
       white-space: pre-wrap;
       line-height: 1.5;
+      color: var(--text);
+    }
+    .idea .price {
+      background: rgba(212,162,76,0.15);
+      border: 1px solid rgba(212,162,76,0.4);
+      color: var(--accent);
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
     }
     .idea .meta {
       color: var(--muted);
@@ -424,14 +444,18 @@
       </div>
 
       <div class="card">
-        <div class="row two">
+        <div class="row">
           <div>
-            <label for="ideaText">Uusi idea</label>
-            <textarea id="ideaText" placeholder="Esim. Sauna ja grillimakkaroita, paintball, kalaretki, whiskymaistelu..."></textarea>
+            <label for="ideaTitle">Otsikko</label>
+            <input id="ideaTitle" type="text" placeholder="Esim. Paintball-ilta" />
           </div>
-          <div class="row">
+          <div>
+            <label for="ideaText">Kuvaus</label>
+            <textarea id="ideaText" placeholder="Tarkempi kuvaus ideasta, paikka, kellonaika, mitä tarvitaan..."></textarea>
+          </div>
+          <div class="row three">
             <div>
-              <label for="author">Nimi (vapaaehtoinen)</label>
+              <label for="author">Nimi (vapaaeht.)</label>
               <input id="author" type="text" placeholder="Kuka ehdotti?" />
             </div>
             <div>
@@ -443,6 +467,10 @@
                 <option value="Pelit & haasteet">Pelit & haasteet</option>
                 <option value="Muu">Muu</option>
               </select>
+            </div>
+            <div>
+              <label for="price">Hinta-arvio (€)</label>
+              <input id="price" type="number" min="0" step="1" placeholder="Esim. 50" />
             </div>
           </div>
         </div>
@@ -464,6 +492,13 @@
         <div class="filters">
           <button class="chip active" data-sort="votes">Suosituimmat</button>
           <button class="chip" data-sort="newest">Uusimmat</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="filters" id="voteFilter">
+          <button class="chip active" data-votefilter="all">Kaikki äänet</button>
+          <button class="chip" data-votefilter="voted">Äänestetyt</button>
+          <button class="chip" data-votefilter="unvoted">Äänestämättä</button>
         </div>
       </div>
 
@@ -492,21 +527,25 @@
     const logoutBtn    = $("#logoutBtn");
     const pwInput      = $("#pw");
     const loginError   = $("#loginError");
+    const ideaTitle    = $("#ideaTitle");
     const ideaText     = $("#ideaText");
     const authorInput  = $("#author");
     const categoryInput= $("#category");
+    const priceInput   = $("#price");
     const addBtn       = $("#addBtn");
     const addError     = $("#addError");
     const ideaList     = $("#ideaList");
     const configWarn   = $("#configWarning");
     const filtersEl    = $("#filters");
+    const voteFilterEl = $("#voteFilter");
 
     let supabase = null;
     let ideas = [];
     let commentsByIdea = {}; // { ideaId: [comments] }
     let openComments = new Set(); // ideat joiden kommentit on auki
-    let activeFilter = "all";
-    let activeSort   = "votes";
+    let activeFilter     = "all";
+    let activeSort       = "votes";
+    let activeVoteFilter = "all"; // "all" | "voted" | "unvoted"
 
     // localStorage: ratedIdeas = { "id": 2, ... } (1-3 tuoppia per idea)
     let ratedIdeas = {};
@@ -623,8 +662,9 @@
     // ---- Lisäys ----
     addBtn.addEventListener("click", async () => {
       const content = ideaText.value.trim();
-      if (!content) {
-        addError.textContent = "Kirjoita idea ennen lisäämistä.";
+      const title   = ideaTitle.value.trim();
+      if (!content && !title) {
+        addError.textContent = "Lisää vähintään otsikko tai kuvaus.";
         return;
       }
       if (!supabase) {
@@ -633,10 +673,14 @@
       }
       addBtn.disabled = true;
       addError.textContent = "";
+      const rawPrice = priceInput.value.trim();
+      const price = rawPrice === "" ? null : Number(rawPrice);
       const payload = {
-        content,
+        title: title || null,
+        content: content || "",
         author: authorInput.value.trim() || null,
         category: categoryInput.value || "Muu",
+        price_estimate: (price !== null && !Number.isNaN(price) && price >= 0) ? price : null,
         votes: 0,
       };
       const { error } = await supabase.from("ideas").insert(payload);
@@ -645,8 +689,10 @@
         addError.textContent = "Lisäys epäonnistui: " + error.message;
         return;
       }
+      ideaTitle.value = "";
       ideaText.value = "";
       authorInput.value = "";
+      priceInput.value = "";
       // realtime-subscription lataa listan uudelleen
     });
 
@@ -700,6 +746,15 @@
       }
       render();
     });
+    voteFilterEl.addEventListener("click", (e) => {
+      const t = e.target;
+      if (!t.classList.contains("chip")) return;
+      if (t.dataset.votefilter) {
+        activeVoteFilter = t.dataset.votefilter;
+        voteFilterEl.querySelectorAll("[data-votefilter]").forEach(c => c.classList.toggle("active", c === t));
+      }
+      render();
+    });
     document.querySelectorAll("[data-sort]").forEach(btn => {
       btn.addEventListener("click", () => {
         activeSort = btn.dataset.sort;
@@ -711,6 +766,8 @@
     function render() {
       let list = [...ideas];
       if (activeFilter !== "all") list = list.filter(i => (i.category || "Muu") === activeFilter);
+      if (activeVoteFilter === "voted") list = list.filter(i => (i.rating_count || 0) > 0);
+      else if (activeVoteFilter === "unvoted") list = list.filter(i => (i.rating_count || 0) === 0);
       if (activeSort === "votes") list.sort((a,b) => (b.votes||0) - (a.votes||0) || new Date(b.created_at) - new Date(a.created_at));
       else list.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -725,10 +782,14 @@
         el.className = "idea";
         const myRating  = ratedIdeas[i.id] || 0;
         const hasRated  = myRating > 0;
-        const safeContent = escapeHtml(i.content);
+        const safeTitle   = i.title ? escapeHtml(i.title) : "";
+        const safeContent = i.content ? escapeHtml(i.content) : "";
         const safeAuthor  = i.author ? escapeHtml(i.author) : "Nimetön";
         const cat = escapeHtml(i.category || "Muu");
         const date = new Date(i.created_at).toLocaleString("fi-FI", { dateStyle: "short", timeStyle: "short" });
+        const priceHtml = (i.price_estimate !== null && i.price_estimate !== undefined)
+          ? `<span class="price">~${formatPrice(i.price_estimate)} €</span>`
+          : "";
         const sum = i.votes || 0;
         const count = i.rating_count || 0;
         const avg = count > 0 ? (sum / count).toFixed(1) : null;
@@ -784,9 +845,11 @@
 
         el.innerHTML = `
           <div>
-            <div class="content">${safeContent}</div>
+            ${safeTitle ? `<h3 class="idea-title">${safeTitle}</h3>` : ""}
+            ${safeContent ? `<div class="content">${safeContent}</div>` : ""}
             <div class="meta">
               <span class="tag">${cat}</span>
+              ${priceHtml}
               <span>${safeAuthor}</span>
               <span>·</span>
               <span>${date}</span>
@@ -863,6 +926,13 @@
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+    }
+
+    function formatPrice(n) {
+      const num = Number(n);
+      if (!Number.isFinite(num)) return "";
+      // Kokonaiseurot ilman desimaaleja, tuhaterottimena välilyönti
+      return Math.round(num).toLocaleString("fi-FI");
     }
   </script>
 </body>
