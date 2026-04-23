@@ -238,6 +238,68 @@
       margin-top: 8px;
     }
 
+    /* Kanban */
+    .kanban {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+      margin-top: 8px;
+    }
+    .kanban-column {
+      background: rgba(23,26,33,0.6);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 120px;
+    }
+    .kanban-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 6px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .kanban-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    .kanban-count {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .kanban-items {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .kanban-empty {
+      color: var(--muted);
+      font-size: 12px;
+      font-style: italic;
+      padding: 10px 6px;
+      text-align: center;
+    }
+    .kanban .idea {
+      grid-template-columns: 1fr;
+    }
+    .kanban .idea .corner {
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
+      margin-top: 4px;
+    }
+
     .idea {
       background: var(--panel);
       border: 1px solid var(--border);
@@ -369,6 +431,18 @@
       border-radius: 999px;
       font-size: 11px;
       font-weight: 600;
+    }
+    .idea .event-at {
+      background: rgba(62,194,127,0.12);
+      border: 1px solid rgba(62,194,127,0.4);
+      color: var(--ok);
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
     .idea .meta {
       color: var(--muted);
@@ -549,6 +623,10 @@
               <input id="price" type="number" min="0" step="1" placeholder="Esim. 50" />
             </div>
           </div>
+          <div>
+            <label for="eventAt">Ajankohta (vapaaeht.)</label>
+            <input id="eventAt" type="datetime-local" />
+          </div>
         </div>
         <div class="actions">
           <button id="cancelBtn" class="ghost" type="button">Peruuta</button>
@@ -558,7 +636,17 @@
       </div>
 
       <div class="toolbar">
+        <div class="filters" id="viewToggle">
+          <button class="chip active" data-view="kanban">Kanban</button>
+          <button class="chip" data-view="list">Lista</button>
+        </div>
         <div class="filters">
+          <button class="chip active" data-sort="votes">Suosituimmat</button>
+          <button class="chip" data-sort="newest">Uusimmat</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="filters" id="categoryFilterWrap" hidden>
           <label for="categoryFilter" class="inline-label">Kategoria</label>
           <select id="categoryFilter" class="filter-select">
             <option value="all">Kaikki</option>
@@ -570,12 +658,6 @@
             <option value="Muu">Muu</option>
           </select>
         </div>
-        <div class="filters">
-          <button class="chip active" data-sort="votes">Suosituimmat</button>
-          <button class="chip" data-sort="newest">Uusimmat</button>
-        </div>
-      </div>
-      <div class="toolbar">
         <div class="filters" id="voteFilter">
           <button class="chip active" data-votefilter="all">Kaikki äänet</button>
           <button class="chip" data-votefilter="voted">Äänestetyt</button>
@@ -583,7 +665,7 @@
         </div>
       </div>
 
-      <div id="ideaList" class="idea-grid"></div>
+      <div id="ideaList"></div>
 
       <footer>Tietoja säilytetään Supabasen ilmaisessa tietokannassa. Älä jaa arkaluonteisia tietoja.</footer>
     </section>
@@ -613,6 +695,7 @@
     const authorInput  = $("#author");
     const categoryInput= $("#category");
     const priceInput   = $("#price");
+    const eventAtInput = $("#eventAt");
     const addBtn       = $("#addBtn");
     const addError     = $("#addError");
     const addToggle    = $("#addToggle");
@@ -621,7 +704,9 @@
     const ideaList     = $("#ideaList");
     const configWarn   = $("#configWarning");
     const categoryFilterEl = $("#categoryFilter");
+    const categoryFilterWrap = $("#categoryFilterWrap");
     const voteFilterEl = $("#voteFilter");
+    const viewToggleEl = $("#viewToggle");
 
     let supabase = null;
     let ideas = [];
@@ -630,6 +715,7 @@
     let activeFilter     = "all";
     let activeSort       = "votes";
     let activeVoteFilter = "all"; // "all" | "voted" | "unvoted"
+    let activeView       = "kanban"; // "kanban" | "list"
     let editingIdeaId    = null;  // jos ei null, kyseinen idea on muokkaustilassa
 
     const CATEGORIES = [
@@ -767,6 +853,7 @@
         ideaText.value = "";
         authorInput.value = "";
         priceInput.value = "";
+        eventAtInput.value = "";
         categoryInput.selectedIndex = 0;
       }
       addError.textContent = "";
@@ -790,12 +877,14 @@
       addError.textContent = "";
       const rawPrice = priceInput.value.trim();
       const price = rawPrice === "" ? null : Number(rawPrice);
+      const eventAt = parseEventAtInput(eventAtInput.value);
       const payload = {
         title: title || null,
         content: content || "",
         author: authorInput.value.trim() || null,
         category: categoryInput.value || "Muu",
         price_estimate: (price !== null && !Number.isNaN(price) && price >= 0) ? price : null,
+        event_at: eventAt,
         votes: 0,
       };
       const { error } = await supabase.from("ideas").insert(payload);
@@ -839,6 +928,7 @@
       const category = el.querySelector(".e-category").value;
       const rawPrice = el.querySelector(".e-price").value.trim();
       const price    = rawPrice === "" ? null : Number(rawPrice);
+      const eventAt  = parseEventAtInput(el.querySelector(".e-event-at").value);
       const errEl    = el.querySelector(".e-error");
       const saveBtn  = el.querySelector(".e-save");
 
@@ -856,6 +946,7 @@
           author: author || null,
           category: category || "Muu",
           price_estimate: (price !== null && !Number.isNaN(price) && price >= 0) ? price : null,
+          event_at: eventAt,
         })
         .eq("id", id);
       saveBtn.disabled = false;
@@ -885,6 +976,15 @@
     }
 
     // ---- Renderöinti ----
+    viewToggleEl.addEventListener("click", (e) => {
+      const t = e.target;
+      if (!t.classList.contains("chip")) return;
+      if (t.dataset.view) {
+        activeView = t.dataset.view;
+        viewToggleEl.querySelectorAll("[data-view]").forEach(c => c.classList.toggle("active", c === t));
+        render();
+      }
+    });
     categoryFilterEl.addEventListener("change", () => {
       activeFilter = categoryFilterEl.value;
       render();
@@ -908,19 +1008,66 @@
 
     function render() {
       let list = [...ideas];
-      if (activeFilter !== "all") list = list.filter(i => (i.category || "Muu") === activeFilter);
       if (activeVoteFilter === "voted") list = list.filter(i => (i.rating_count || 0) > 0);
       else if (activeVoteFilter === "unvoted") list = list.filter(i => (i.rating_count || 0) === 0);
       if (activeSort === "votes") list.sort((a,b) => (b.votes||0) - (a.votes||0) || new Date(b.created_at) - new Date(a.created_at));
       else list.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
 
       ideaList.innerHTML = "";
+      // Näytä kategoria-suodatin vain listanäkymässä (Kanban-näkymässä kolumnit ovat kategoriat)
+      categoryFilterWrap.hidden = activeView !== "list";
+
+      if (activeView === "kanban") {
+        renderKanban(list);
+      } else {
+        if (activeFilter !== "all") list = list.filter(i => (i.category || "Muu") === activeFilter);
+        renderList(list);
+      }
+    }
+
+    function renderList(list) {
       if (!list.length) {
         ideaList.innerHTML = `<div class="empty">Ei vielä ideoita. Ole ensimmäinen!</div>`;
         return;
       }
+      const grid = document.createElement("div");
+      grid.className = "idea-grid";
+      for (const i of list) buildIdeaCard(i, grid);
+      ideaList.appendChild(grid);
+    }
 
-      for (const i of list) {
+    function renderKanban(list) {
+      if (!list.length) {
+        ideaList.innerHTML = `<div class="empty">Ei vielä ideoita. Ole ensimmäinen!</div>`;
+        return;
+      }
+      const kanban = document.createElement("div");
+      kanban.className = "kanban";
+      for (const cat of CATEGORIES) {
+        const items = list.filter(i => (i.category || "Muu") === cat);
+        const col = document.createElement("div");
+        col.className = "kanban-column";
+        col.innerHTML = `
+          <div class="kanban-header">
+            <div class="kanban-title">${escapeHtml(cat)}</div>
+            <div class="kanban-count">${items.length}</div>
+          </div>
+        `;
+        const itemsWrap = document.createElement("div");
+        itemsWrap.className = "kanban-items";
+        if (items.length === 0) {
+          itemsWrap.innerHTML = `<div class="kanban-empty">Ei ideoita</div>`;
+        } else {
+          for (const i of items) buildIdeaCard(i, itemsWrap);
+        }
+        col.appendChild(itemsWrap);
+        kanban.appendChild(col);
+      }
+      ideaList.appendChild(kanban);
+    }
+
+    function buildIdeaCard(i, container) {
+      {
         const el = document.createElement("div");
         el.className = "idea";
 
@@ -931,6 +1078,7 @@
           const eContent = escapeHtml(i.content || "");
           const eAuthor  = escapeHtml(i.author || "");
           const ePrice   = (i.price_estimate !== null && i.price_estimate !== undefined) ? i.price_estimate : "";
+          const eEventAt = formatDatetimeLocalValue(i.event_at || "");
           const curCat   = i.category || "Muu";
           const options  = CATEGORIES.map(c =>
             `<option value="${escapeHtml(c)}"${c === curCat ? " selected" : ""}>${escapeHtml(c)}</option>`
@@ -960,6 +1108,10 @@
                     <input class="e-price" type="number" min="0" step="1" value="${ePrice}" placeholder="Esim. 50" />
                   </div>
                 </div>
+                <div>
+                  <label>Ajankohta (vapaaeht.)</label>
+                  <input class="e-event-at" type="datetime-local" value="${eEventAt}" />
+                </div>
               </div>
               <div class="edit-actions">
                 <button class="ghost e-cancel" type="button">Peruuta</button>
@@ -973,8 +1125,8 @@
             render();
           });
           el.querySelector(".e-save").addEventListener("click", () => saveEdit(i.id, el));
-          ideaList.appendChild(el);
-          continue;
+          container.appendChild(el);
+          return;
         }
 
         const myRating  = ratedIdeas[i.id] || 0;
@@ -986,6 +1138,10 @@
         const date = new Date(i.created_at).toLocaleString("fi-FI", { dateStyle: "short", timeStyle: "short" });
         const priceHtml = (i.price_estimate !== null && i.price_estimate !== undefined)
           ? `<span class="price">~${formatPrice(i.price_estimate)} €</span>`
+          : "";
+        const eventAtText = formatEventAt(i.event_at);
+        const eventAtHtml = eventAtText
+          ? `<span class="event-at" title="Ajankohta">📅 ${escapeHtml(eventAtText)}</span>`
           : "";
         const sum = i.votes || 0;
         const count = i.rating_count || 0;
@@ -1040,12 +1196,14 @@
           `;
         }
 
+        const tagHtml = activeView === "kanban" ? "" : `<span class="tag">${cat}</span>`;
         el.innerHTML = `
           <div>
             ${safeTitle ? `<h3 class="idea-title">${safeTitle}</h3>` : ""}
             ${safeContent ? `<div class="content">${safeContent}</div>` : ""}
             <div class="meta">
-              <span class="tag">${cat}</span>
+              ${tagHtml}
+              ${eventAtHtml}
               ${priceHtml}
               <span>${safeAuthor}</span>
               <span>·</span>
@@ -1119,7 +1277,7 @@
           render();
         });
         el.querySelector(".delete").addEventListener("click", () => removeIdea(i.id));
-        ideaList.appendChild(el);
+        container.appendChild(el);
       }
     }
 
@@ -1137,6 +1295,37 @@
       if (!Number.isFinite(num)) return "";
       // Kokonaiseurot ilman desimaaleja, tuhaterottimena välilyönti
       return Math.round(num).toLocaleString("fi-FI");
+    }
+
+    // Muuntaa ISO-merkkijonon "fi-FI"-muotoiseksi päivä + kellonaika -tekstiksi
+    function formatEventAt(iso) {
+      if (!iso) return "";
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return "";
+      return d.toLocaleString("fi-FI", {
+        weekday: "short",
+        day: "numeric",
+        month: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    // Muuntaa ISO-merkkijonon datetime-local input -arvoksi (YYYY-MM-DDTHH:mm, paikallinen aika)
+    function formatDatetimeLocalValue(iso) {
+      if (!iso) return "";
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return "";
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    // Muuntaa datetime-local inputin arvon ISO-merkkijonoksi tai null
+    function parseEventAtInput(s) {
+      if (!s) return null;
+      const d = new Date(s);
+      if (isNaN(d.getTime())) return null;
+      return d.toISOString();
     }
   </script>
 </body>
