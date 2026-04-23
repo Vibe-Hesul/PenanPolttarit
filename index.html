@@ -299,6 +299,49 @@
       justify-content: flex-end;
       margin-top: 4px;
     }
+    .kanban-card-compact {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .kanban-card-compact:hover {
+      border-color: rgba(212,162,76,0.5);
+      background: var(--panel-2);
+    }
+    .kanban-card-compact .kc-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+      flex: 1;
+      min-width: 0;
+      word-break: break-word;
+    }
+    .kanban-card-compact .kc-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .kanban-card-compact .kc-chevron {
+      color: var(--muted);
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+    .kanban-card-compact .kc-mini-mugs {
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+    }
 
     .idea {
       background: var(--panel);
@@ -477,6 +520,15 @@
     }
     .idea .edit:hover { color: var(--accent); }
     .idea .delete:hover { color: var(--danger); }
+    .idea .collapse {
+      background: transparent;
+      border: 0;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+    .idea .collapse:hover { color: var(--text); }
     .idea.editing {
       grid-template-columns: 1fr;
     }
@@ -712,6 +764,7 @@
     let ideas = [];
     let commentsByIdea = {}; // { ideaId: [comments] }
     let openComments = new Set(); // ideat joiden kommentit on auki
+    let expandedIdeas = new Set(); // kanban-näkymässä laajennetut kortit
     let activeFilter     = "all";
     let activeSort       = "votes";
     let activeVoteFilter = "all"; // "all" | "voted" | "unvoted"
@@ -1129,6 +1182,30 @@
           return;
         }
 
+        // ---- Kanban-näkymässä tiivistetty kortti jos ei laajennettu ----
+        if (activeView === "kanban" && !expandedIdeas.has(i.id)) {
+          const compactTitle = i.title || i.content || "(nimetön idea)";
+          const safeCompactTitle = escapeHtml(compactTitle);
+          const miniCount = i.rating_count || 0;
+          const miniAvg = miniCount > 0 ? ((i.votes || 0) / miniCount).toFixed(1) : null;
+          const miniMugs = miniAvg ? `<span class="kc-mini-mugs" title="Keskiarvo ${miniAvg} · ${miniCount} ${miniCount === 1 ? "ääni" : "ääntä"}">🍺 ${miniAvg}</span>` : "";
+          const compact = document.createElement("div");
+          compact.className = "kanban-card-compact";
+          compact.innerHTML = `
+            <div class="kc-title">${safeCompactTitle}</div>
+            <div class="kc-meta">
+              ${miniMugs}
+              <span class="kc-chevron">▾</span>
+            </div>
+          `;
+          compact.addEventListener("click", () => {
+            expandedIdeas.add(i.id);
+            render();
+          });
+          container.appendChild(compact);
+          return;
+        }
+
         const myRating  = ratedIdeas[i.id] || 0;
         const hasRated  = myRating > 0;
         const safeTitle   = i.title ? escapeHtml(i.title) : "";
@@ -1197,6 +1274,9 @@
         }
 
         const tagHtml = activeView === "kanban" ? "" : `<span class="tag">${cat}</span>`;
+        const collapseBtn = activeView === "kanban"
+          ? `<button class="collapse" title="Piilota tiedot">Piilota</button>`
+          : "";
         el.innerHTML = `
           <div>
             ${safeTitle ? `<h3 class="idea-title">${safeTitle}</h3>` : ""}
@@ -1217,6 +1297,7 @@
             ${commentsHtml}
           </div>
           <div class="corner">
+            ${collapseBtn}
             <button class="edit" title="Muokkaa">Muokkaa</button>
             <button class="delete" title="Poista">Poista</button>
           </div>
@@ -1277,6 +1358,13 @@
           render();
         });
         el.querySelector(".delete").addEventListener("click", () => removeIdea(i.id));
+        const collapseEl = el.querySelector(".collapse");
+        if (collapseEl) {
+          collapseEl.addEventListener("click", () => {
+            expandedIdeas.delete(i.id);
+            render();
+          });
+        }
         container.appendChild(el);
       }
     }
