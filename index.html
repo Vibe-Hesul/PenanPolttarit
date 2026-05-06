@@ -343,6 +343,206 @@
       font-weight: 600;
     }
 
+    /* Kalenteri */
+    .calendar-wrap {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 14px;
+      margin-top: 8px;
+    }
+    @media (max-width: 720px) {
+      .calendar-wrap { grid-template-columns: 1fr; }
+    }
+    .calendar-pool {
+      background: rgba(23,26,33,0.6);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      align-self: start;
+    }
+    .cal-pool-header {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .cal-pool-count {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .cal-pool-items {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 80px;
+      padding: 4px;
+      border-radius: 8px;
+      transition: background 0.15s ease;
+    }
+    .cal-pool-items.dragover {
+      background: rgba(212,162,76,0.10);
+      outline: 1.5px dashed rgba(212,162,76,0.6);
+      outline-offset: -2px;
+    }
+    .cal-pool-empty {
+      color: var(--muted);
+      font-size: 12px;
+      font-style: italic;
+      text-align: center;
+      padding: 8px;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: 56px 1fr 1fr 1fr;
+      background: rgba(23,26,33,0.4);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .cal-time-col, .cal-day-col {
+      display: flex;
+      flex-direction: column;
+    }
+    .cal-day-col + .cal-day-col, .cal-time-col + .cal-day-col {
+      border-left: 1px solid var(--border);
+    }
+    .cal-corner {
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--border);
+      height: 38px;
+    }
+    .cal-day-header {
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 8px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text);
+      letter-spacing: 0.3px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cal-time {
+      padding: 4px 8px;
+      font-size: 11px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      display: flex;
+      align-items: flex-start;
+      box-sizing: border-box;
+    }
+    .cal-time + .cal-time {
+      border-top: 1px solid var(--border);
+    }
+    .cal-day-body {
+      position: relative;
+      flex: 1;
+    }
+    .cal-hour-zone {
+      box-sizing: border-box;
+      transition: background 0.12s ease;
+    }
+    .cal-hour-zone + .cal-hour-zone {
+      border-top: 1px solid var(--border);
+    }
+    .cal-hour-zone.dragover {
+      background: rgba(212,162,76,0.14);
+      box-shadow: inset 0 0 0 1.5px rgba(212,162,76,0.5);
+    }
+    .cal-card {
+      background: rgba(212,162,76,0.92);
+      color: #1a1a1a;
+      border: 1px solid var(--accent-2);
+      border-radius: 7px;
+      padding: 4px 8px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: grab;
+      overflow: hidden;
+      user-select: none;
+      line-height: 1.25;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
+    .cal-card:hover { background: var(--accent); }
+    .cal-card:active { cursor: grabbing; }
+    .cal-card.dragging { opacity: 0.45; }
+    .cal-card .cal-card-title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+    .cal-card .cal-card-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .cal-card .cal-card-mugs {
+      color: rgba(26,26,26,0.7);
+      font-size: 10px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .cal-card .cal-card-time {
+      color: rgba(26,26,26,0.65);
+      font-size: 10px;
+      font-weight: 500;
+      margin-top: 2px;
+    }
+    .cal-card .cal-resize {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 7px;
+      cursor: ns-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cal-card .cal-resize::before {
+      content: '';
+      width: 32px;
+      height: 2px;
+      background: rgba(26,26,26,0.35);
+      border-radius: 2px;
+    }
+    .cal-card .cal-resize:hover::before {
+      background: rgba(26,26,26,0.7);
+    }
+    .cal-card.in-calendar {
+      position: absolute;
+      left: 4px;
+      right: 4px;
+    }
+    .cal-card.resizing {
+      box-shadow: 0 0 0 2px var(--accent), 0 4px 8px rgba(0,0,0,0.35);
+    }
+    .calendar-help {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      background: rgba(212,162,76,0.06);
+      border: 1px solid rgba(212,162,76,0.2);
+      border-radius: 8px;
+    }
+
     .idea {
       background: var(--panel);
       border: 1px solid var(--border);
@@ -675,9 +875,24 @@
               <input id="price" type="number" min="0" step="1" placeholder="Esim. 50" />
             </div>
           </div>
-          <div>
-            <label for="eventAt">Ajankohta (vapaaeht.)</label>
-            <input id="eventAt" type="datetime-local" />
+          <div class="row two">
+            <div>
+              <label for="eventAt">Ajankohta (vapaaeht.)</label>
+              <input id="eventAt" type="datetime-local" />
+            </div>
+            <div>
+              <label for="duration">Kesto</label>
+              <select id="duration">
+                <option value="30">30 min</option>
+                <option value="60" selected>1 h</option>
+                <option value="90">1,5 h</option>
+                <option value="120">2 h</option>
+                <option value="180">3 h</option>
+                <option value="240">4 h</option>
+                <option value="360">6 h</option>
+                <option value="480">8 h</option>
+              </select>
+            </div>
           </div>
         </div>
         <div class="actions">
@@ -691,6 +906,7 @@
         <div class="filters" id="viewToggle">
           <button class="chip active" data-view="kanban">Kanban</button>
           <button class="chip" data-view="list">Lista</button>
+          <button class="chip" data-view="calendar">Kalenteri</button>
         </div>
         <div class="filters">
           <button class="chip active" data-sort="votes">Suosituimmat</button>
@@ -748,6 +964,7 @@
     const categoryInput= $("#category");
     const priceInput   = $("#price");
     const eventAtInput = $("#eventAt");
+    const durationInput = $("#duration");
     const addBtn       = $("#addBtn");
     const addError     = $("#addError");
     const addToggle    = $("#addToggle");
@@ -779,6 +996,16 @@
       "Pelit & haasteet",
       "Muu",
     ];
+
+    // Kalenterinäkymän päivät (pe 7.8.2026 - su 9.8.2026) ja tunnit
+    const CALENDAR_DAYS = [
+      { date: "2026-08-07", label: "Pe 7.8." },
+      { date: "2026-08-08", label: "La 8.8." },
+      { date: "2026-08-09", label: "Su 9.8." },
+    ];
+    const CALENDAR_HOUR_START = 9;  // 09:00
+    const CALENDAR_HOUR_END   = 23; // 23:00 (mukaan luettuna)
+    const CALENDAR_HOUR_HEIGHT = 44; // px per tunti (visuaalinen mittakaava)
 
     // localStorage: ratedIdeas = { "id": 2, ... } (1-3 tuoppia per idea)
     let ratedIdeas = {};
@@ -907,6 +1134,7 @@
         authorInput.value = "";
         priceInput.value = "";
         eventAtInput.value = "";
+        durationInput.value = "60";
         categoryInput.selectedIndex = 0;
       }
       addError.textContent = "";
@@ -931,6 +1159,7 @@
       const rawPrice = priceInput.value.trim();
       const price = rawPrice === "" ? null : Number(rawPrice);
       const eventAt = parseEventAtInput(eventAtInput.value);
+      const duration = parseInt(durationInput.value);
       const payload = {
         title: title || null,
         content: content || "",
@@ -938,6 +1167,7 @@
         category: categoryInput.value || "Muu",
         price_estimate: (price !== null && !Number.isNaN(price) && price >= 0) ? price : null,
         event_at: eventAt,
+        duration_minutes: Number.isFinite(duration) && duration > 0 ? duration : 60,
         votes: 0,
       };
       const { error } = await supabase.from("ideas").insert(payload);
@@ -982,6 +1212,7 @@
       const rawPrice = el.querySelector(".e-price").value.trim();
       const price    = rawPrice === "" ? null : Number(rawPrice);
       const eventAt  = parseEventAtInput(el.querySelector(".e-event-at").value);
+      const duration = parseInt(el.querySelector(".e-duration").value);
       const errEl    = el.querySelector(".e-error");
       const saveBtn  = el.querySelector(".e-save");
 
@@ -1000,6 +1231,7 @@
           category: category || "Muu",
           price_estimate: (price !== null && !Number.isNaN(price) && price >= 0) ? price : null,
           event_at: eventAt,
+          duration_minutes: Number.isFinite(duration) && duration > 0 ? duration : 60,
         })
         .eq("id", id);
       saveBtn.disabled = false;
@@ -1067,11 +1299,15 @@
       else list.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
 
       ideaList.innerHTML = "";
-      // Näytä kategoria-suodatin vain listanäkymässä (Kanban-näkymässä kolumnit ovat kategoriat)
-      categoryFilterWrap.hidden = activeView !== "list";
+      // Kanban-näkymässä kolumnit ovat kategoriat → kategoria-suodatin piilotetaan.
+      // Lista- ja Kalenteri-näkymässä kategoria-suodatin on käytössä.
+      categoryFilterWrap.hidden = (activeView === "kanban");
 
       if (activeView === "kanban") {
         renderKanban(list);
+      } else if (activeView === "calendar") {
+        if (activeFilter !== "all") list = list.filter(i => (i.category || "Muu") === activeFilter);
+        renderCalendar(list);
       } else {
         if (activeFilter !== "all") list = list.filter(i => (i.category || "Muu") === activeFilter);
         renderList(list);
@@ -1087,6 +1323,276 @@
       grid.className = "idea-grid";
       for (const i of list) buildIdeaCard(i, grid);
       ideaList.appendChild(grid);
+    }
+
+    function renderCalendar(list) {
+      // Jaa ideat kalenteriin mahtuviin ja ulkopuolisiin (= ajoittamattomat / vääränä päivänä)
+      const slotted = [];
+      const unscheduled = [];
+      for (const i of list) {
+        const s = getCalendarSlot(i.event_at);
+        if (s) slotted.push(i);
+        else unscheduled.push(i);
+      }
+
+      const wrap = document.createElement("div");
+
+      const help = document.createElement("div");
+      help.className = "calendar-help";
+      help.textContent = "Vedä idea ajoittamattomista pooliista kalenteriin. Muuta kestoa raahamalla kortin alareunaa.";
+      wrap.appendChild(help);
+
+      const grid = document.createElement("div");
+      grid.className = "calendar-wrap";
+
+      // Vasen pooli
+      const pool = document.createElement("aside");
+      pool.className = "calendar-pool";
+      pool.innerHTML = `
+        <div class="cal-pool-header">
+          <span>Ajoittamattomat</span>
+          <span class="cal-pool-count">${unscheduled.length}</span>
+        </div>
+        <div class="cal-pool-items" data-drop="pool"></div>
+      `;
+      const poolItems = pool.querySelector(".cal-pool-items");
+      if (unscheduled.length === 0) {
+        poolItems.innerHTML = `<div class="cal-pool-empty">Kaikki aikataulutettu</div>`;
+      } else {
+        for (const i of unscheduled) poolItems.appendChild(buildCalendarCard(i, { inCalendar: false }));
+      }
+      grid.appendChild(pool);
+
+      // Oikea kalenteri
+      const cal = document.createElement("div");
+      cal.className = "calendar-grid";
+
+      // Aikasarake (vasemman päivän vasemmalla puolella)
+      const timeCol = document.createElement("div");
+      timeCol.className = "cal-time-col";
+      timeCol.innerHTML = `<div class="cal-corner"></div>`;
+      for (let h = CALENDAR_HOUR_START; h <= CALENDAR_HOUR_END; h++) {
+        const t = document.createElement("div");
+        t.className = "cal-time";
+        t.style.height = `${CALENDAR_HOUR_HEIGHT}px`;
+        t.textContent = `${String(h).padStart(2,"0")}:00`;
+        timeCol.appendChild(t);
+      }
+      cal.appendChild(timeCol);
+
+      // Päiväsarakkeet
+      const totalHours = CALENDAR_HOUR_END - CALENDAR_HOUR_START + 1;
+      for (let dIdx = 0; dIdx < CALENDAR_DAYS.length; dIdx++) {
+        const dayCol = document.createElement("div");
+        dayCol.className = "cal-day-col";
+        dayCol.dataset.day = dIdx;
+
+        const header = document.createElement("div");
+        header.className = "cal-day-header";
+        header.textContent = CALENDAR_DAYS[dIdx].label;
+        dayCol.appendChild(header);
+
+        const body = document.createElement("div");
+        body.className = "cal-day-body";
+        body.style.height = `${totalHours * CALENDAR_HOUR_HEIGHT}px`;
+        // Tuntiruudut taustatason verkoksi
+        for (let h = CALENDAR_HOUR_START; h <= CALENDAR_HOUR_END; h++) {
+          const z = document.createElement("div");
+          z.className = "cal-hour-zone";
+          z.dataset.hour = h;
+          z.style.height = `${CALENDAR_HOUR_HEIGHT}px`;
+          body.appendChild(z);
+        }
+        // Sijoita kortit absoluuttisesti
+        const dayIdeas = slotted.filter(i => getCalendarSlot(i.event_at).dayIdx === dIdx);
+        const arranged = arrangeCalendarLanes(dayIdeas);
+        for (const item of arranged) {
+          const card = buildCalendarCard(item.idea, { inCalendar: true });
+          card.style.top = `${item.topPx}px`;
+          card.style.height = `${item.heightPx}px`;
+          card.style.left = `calc(${item.lane / item.laneCount * 100}% + 4px)`;
+          card.style.right = "auto";
+          card.style.width = `calc(${100 / item.laneCount}% - 8px)`;
+          body.appendChild(card);
+        }
+        dayCol.appendChild(body);
+        cal.appendChild(dayCol);
+
+        // Drag-drop: koko päiväpohja yhtenä alueena, lasketaan tunti kursorin Y-arvosta
+        const handleDragOver = (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          const rect = body.getBoundingClientRect();
+          const y = e.clientY - rect.top;
+          const hourIdx = Math.max(0, Math.min(totalHours - 1, Math.floor(y / CALENDAR_HOUR_HEIGHT)));
+          const targetHour = CALENDAR_HOUR_START + hourIdx;
+          body.querySelectorAll(".cal-hour-zone").forEach(z => {
+            z.classList.toggle("dragover", parseInt(z.dataset.hour) === targetHour);
+          });
+        };
+        body.addEventListener("dragover", handleDragOver);
+        body.addEventListener("dragleave", (e) => {
+          if (!body.contains(e.relatedTarget)) {
+            body.querySelectorAll(".cal-hour-zone").forEach(z => z.classList.remove("dragover"));
+          }
+        });
+        body.addEventListener("drop", (e) => {
+          e.preventDefault();
+          const rect = body.getBoundingClientRect();
+          const y = e.clientY - rect.top;
+          const hourIdx = Math.max(0, Math.min(totalHours - 1, Math.floor(y / CALENDAR_HOUR_HEIGHT)));
+          const targetHour = CALENDAR_HOUR_START + hourIdx;
+          body.querySelectorAll(".cal-hour-zone").forEach(z => z.classList.remove("dragover"));
+          const id = e.dataTransfer.getData("text/idea-id");
+          if (!id) return;
+          const iso = calendarSlotToIso(dIdx, targetHour);
+          setIdeaEventAt(id, iso);
+        });
+      }
+
+      grid.appendChild(cal);
+
+      // Pooli: pudotus tyhjentää event_at:n
+      poolItems.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        poolItems.classList.add("dragover");
+      });
+      poolItems.addEventListener("dragleave", (e) => {
+        if (!poolItems.contains(e.relatedTarget)) poolItems.classList.remove("dragover");
+      });
+      poolItems.addEventListener("drop", (e) => {
+        e.preventDefault();
+        poolItems.classList.remove("dragover");
+        const id = e.dataTransfer.getData("text/idea-id");
+        if (!id) return;
+        setIdeaEventAt(id, null);
+      });
+
+      wrap.appendChild(grid);
+      ideaList.appendChild(wrap);
+    }
+
+    // Sijoittelee päivän kortit "kaistoille" (lanes) niin että päällekkäiset kortit eivät peitä toisiaan
+    function arrangeCalendarLanes(dayIdeas) {
+      const items = dayIdeas.map(i => {
+        const d = new Date(i.event_at);
+        const startMin = d.getHours() * 60 + d.getMinutes();
+        const dur = (i.duration_minutes && i.duration_minutes > 0) ? i.duration_minutes : 60;
+        const endMin = Math.min(startMin + dur, (CALENDAR_HOUR_END + 1) * 60);
+        const visibleStart = Math.max(startMin, CALENDAR_HOUR_START * 60);
+        const topPx    = (visibleStart - CALENDAR_HOUR_START * 60) * (CALENDAR_HOUR_HEIGHT / 60);
+        const heightPx = Math.max(20, (endMin - visibleStart) * (CALENDAR_HOUR_HEIGHT / 60) - 2);
+        return { idea: i, startMin, endMin, topPx, heightPx, lane: 0, laneCount: 1 };
+      });
+      items.sort((a,b) => a.startMin - b.startMin || a.endMin - b.endMin);
+
+      // Greedy lane-sijoittelu: kunkin kortin ensimmäinen vapaa kaista
+      const lanes = []; // lanes[k] = endMin viimeisestä kortista kaistalla k
+      for (const it of items) {
+        let placed = false;
+        for (let k = 0; k < lanes.length; k++) {
+          if (lanes[k] <= it.startMin) {
+            it.lane = k;
+            lanes[k] = it.endMin;
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) {
+          it.lane = lanes.length;
+          lanes.push(it.endMin);
+        }
+      }
+      // Laske jokaiselle ryhmälle, kuinka monta kaistaa kokonaisuutena käytetään päällekkäin
+      // Yksinkertaistus: käytetään kaikille saman päivän korteille suurinta päällekkäisten määrää
+      // (riittävä useimpiin tapauksiin; täydellinen ratkaisu vaatisi konfliktiklustereiden etsimistä)
+      const maxLanes = lanes.length || 1;
+      for (const it of items) it.laneCount = maxLanes;
+      return items;
+    }
+
+    function buildCalendarCard(i, opts = {}) {
+      const inCalendar = !!opts.inCalendar;
+      const card = document.createElement("div");
+      card.className = "cal-card" + (inCalendar ? " in-calendar" : "");
+      card.draggable = true;
+      card.dataset.id = i.id;
+      const title = i.title || i.content || "(nimetön)";
+      const dur = (i.duration_minutes && i.duration_minutes > 0) ? i.duration_minutes : 60;
+      const tooltipParts = [];
+      if (i.title && i.content) tooltipParts.push(i.content);
+      if (i.author) tooltipParts.push("— " + i.author);
+      if (i.price_estimate !== null && i.price_estimate !== undefined) tooltipParts.push("~" + formatPrice(i.price_estimate) + " €");
+      if (i.category) tooltipParts.push("[" + i.category + "]");
+      tooltipParts.push("Kesto: " + formatDuration(dur));
+      card.title = title + "\n\n" + tooltipParts.join("\n");
+
+      const count = i.rating_count || 0;
+      const avg   = count > 0 ? ((i.votes || 0) / count).toFixed(1) : null;
+      const mugSpan = avg ? `<span class="cal-card-mugs">🍺 ${avg}</span>` : "";
+      let timeRow = "";
+      if (inCalendar && i.event_at) {
+        const d = new Date(i.event_at);
+        const start = formatHourMinute(d);
+        const endDate = new Date(d.getTime() + dur * 60000);
+        const end = formatHourMinute(endDate);
+        timeRow = `<div class="cal-card-time">${start}–${end} · ${formatDuration(dur)}</div>`;
+      }
+      card.innerHTML = `
+        <div class="cal-card-row">
+          <span class="cal-card-title">${escapeHtml(title)}</span>
+          ${mugSpan}
+        </div>
+        ${timeRow}
+        ${inCalendar ? `<div class="cal-resize" title="Raahaa muuttaaksesi kestoa"></div>` : ""}
+      `;
+
+      card.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/idea-id", i.id);
+        e.dataTransfer.effectAllowed = "move";
+        card.classList.add("dragging");
+      });
+      card.addEventListener("dragend", () => {
+        card.classList.remove("dragging");
+      });
+
+      // Resize-kahvan toiminnallisuus (vain kalenterissa)
+      if (inCalendar) {
+        const resize = card.querySelector(".cal-resize");
+        if (resize) {
+          resize.addEventListener("mousedown", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            card.draggable = false;
+            card.classList.add("resizing");
+            const startY = e.clientY;
+            const startDuration = (i.duration_minutes && i.duration_minutes > 0) ? i.duration_minutes : 60;
+            let newDuration = startDuration;
+            const onMove = (ev) => {
+              const dy = ev.clientY - startY;
+              // Rasteroi 15 minuutin tarkkuuteen
+              const dMinutes = Math.round((dy / CALENDAR_HOUR_HEIGHT) * 60 / 15) * 15;
+              newDuration = Math.max(15, Math.min(720, startDuration + dMinutes));
+              card.style.height = `${Math.max(20, newDuration * (CALENDAR_HOUR_HEIGHT / 60) - 2)}px`;
+            };
+            const onUp = () => {
+              document.removeEventListener("mousemove", onMove);
+              document.removeEventListener("mouseup", onUp);
+              card.classList.remove("resizing");
+              card.draggable = true;
+              if (newDuration !== startDuration) {
+                setIdeaDuration(i.id, newDuration);
+              }
+            };
+            document.addEventListener("mousemove", onMove);
+            document.addEventListener("mouseup", onUp);
+          });
+          // Estä resize-kahvan käynnistämästä raahausta
+          resize.addEventListener("dragstart", (e) => e.preventDefault());
+        }
+      }
+      return card;
     }
 
     function renderKanban(list) {
@@ -1161,9 +1667,20 @@
                     <input class="e-price" type="number" min="0" step="1" value="${ePrice}" placeholder="Esim. 50" />
                   </div>
                 </div>
-                <div>
-                  <label>Ajankohta (vapaaeht.)</label>
-                  <input class="e-event-at" type="datetime-local" value="${eEventAt}" />
+                <div class="row two">
+                  <div>
+                    <label>Ajankohta (vapaaeht.)</label>
+                    <input class="e-event-at" type="datetime-local" value="${eEventAt}" />
+                  </div>
+                  <div>
+                    <label>Kesto</label>
+                    <select class="e-duration">
+                      ${[30,60,90,120,180,240,360,480].map(v => {
+                        const lbl = v < 60 ? `${v} min` : (v % 60 === 0 ? `${v/60} h` : `${(v/60).toFixed(1).replace(".", ",")} h`);
+                        return `<option value="${v}"${(i.duration_minutes || 60) === v ? " selected" : ""}>${lbl}</option>`;
+                      }).join("")}
+                    </select>
+                  </div>
                 </div>
               </div>
               <div class="edit-actions">
@@ -1414,6 +1931,64 @@
       const d = new Date(s);
       if (isNaN(d.getTime())) return null;
       return d.toISOString();
+    }
+
+    // Palauttaa { dayIdx, hour } jos idea sijoittuu kalenterin alueelle, muuten null
+    function getCalendarSlot(iso) {
+      if (!iso) return null;
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return null;
+      const ymd = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+      const dayIdx = CALENDAR_DAYS.findIndex(x => x.date === ymd);
+      if (dayIdx === -1) return null;
+      let hour = d.getHours();
+      if (hour < CALENDAR_HOUR_START) hour = CALENDAR_HOUR_START;
+      if (hour > CALENDAR_HOUR_END)   hour = CALENDAR_HOUR_END;
+      return { dayIdx, hour };
+    }
+
+    // Muuntaa kalenteriruudun (päivä-indeksi + tunti) ISO-merkkijonoksi paikallisaikaa käyttäen
+    function calendarSlotToIso(dayIdx, hour) {
+      const day = CALENDAR_DAYS[dayIdx];
+      if (!day) return null;
+      const [y, m, d] = day.date.split("-").map(Number);
+      const dt = new Date(y, m - 1, d, hour, 0, 0, 0);
+      return dt.toISOString();
+    }
+
+    // Tallentaa idean event_at -arvon (raahaus pudottaa kalenteriin tai pooliin)
+    async function setIdeaEventAt(id, iso) {
+      if (!supabase) return;
+      const { error } = await supabase.from("ideas").update({ event_at: iso }).eq("id", id);
+      if (error) console.warn("Aikataulutus epäonnistui:", error.message);
+      // realtime-subscription päivittää listan, mutta tehdään myös optimistinen päivitys
+      const idea = ideas.find(x => x.id === id);
+      if (idea) idea.event_at = iso;
+      render();
+    }
+
+    // Tallentaa idean keston minuuteissa (resize-raahaus kalenterissa)
+    async function setIdeaDuration(id, minutes) {
+      if (!supabase) return;
+      const safeMinutes = Math.max(15, Math.min(720, Math.round(minutes)));
+      const { error } = await supabase.from("ideas").update({ duration_minutes: safeMinutes }).eq("id", id);
+      if (error) console.warn("Keston tallennus epäonnistui:", error.message);
+      const idea = ideas.find(x => x.id === id);
+      if (idea) idea.duration_minutes = safeMinutes;
+      render();
+    }
+
+    // Muotoilee keston ihmismuotoon: "1 h", "1,5 h", "30 min" jne.
+    function formatDuration(minutes) {
+      if (!minutes || minutes <= 0) return "";
+      if (minutes < 60) return `${minutes} min`;
+      const h = minutes / 60;
+      if (Number.isInteger(h)) return `${h} h`;
+      return `${h.toFixed(1).replace(".", ",")} h`;
+    }
+
+    function formatHourMinute(d) {
+      return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
     }
   </script>
 </body>
